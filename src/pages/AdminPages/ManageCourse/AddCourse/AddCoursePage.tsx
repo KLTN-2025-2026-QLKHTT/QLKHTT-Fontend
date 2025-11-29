@@ -124,10 +124,7 @@ const AddCoursePage = () => {
     };
 
     const handleAddCategory = async () => {
-        if (!selectedFieldId) {
-            message.warning("Vui lòng chọn lĩnh vực trước khi thêm thể loại!");
-            return;
-        }
+       
 
         try {
             await addCategory({
