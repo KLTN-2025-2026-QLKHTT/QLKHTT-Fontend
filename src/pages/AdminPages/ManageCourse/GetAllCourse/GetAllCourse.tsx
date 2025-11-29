@@ -1,0 +1,425 @@
+import { Button, Input, Modal, Pagination, DatePicker, Select, Table, Tag, Tooltip, message } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Course } from '../../../../types/Course.type';
+import { ColumnType } from 'antd/es/table';
+import { useCourseAll } from '../../../../hooks/useCourseAll';
+import { FormatType, secondsToTimeString } from '../../../../utils/TimeFormater';
+import { formatNumberWithCommas } from '../../../../utils/NumberFormater';
+import { Link } from 'react-router-dom';
+import { PagingParam } from '../../../../types/TableParam';
+import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { useDeleteCourseMutation } from '../../../../services/course.services';
+import { downloadExcel } from "../../../../utils/downloadExcel";
+import { useGetAllTeachersQuery } from "../../../../services/account.services";
+
+
+type GetAllCourseProps = {
+    pagination: { current: number; total: number };
+    displayData: number;
+};
+
+const columns = ({
+    pagination,
+    displayData,
+    handleDelete,
+}: GetAllCourseProps & { handleDelete: (id: number) => void }): ColumnType<Course>[] => [
+        {
+            title: 'STT',
+            dataIndex: 'stt',
+            key: 'stt',
+            render: (_, __, index) => {
+                const currentPage = pagination.current;
+                const pageSize = displayData;
+                const calculatedIndex = (currentPage - 1) * pageSize + index + 1;
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span>{calculatedIndex}</span>
+                    </div>
+                );
+            },
+            width: '3%',
+        },
+        {
+            title: 'Tên khóa học',
+            dataIndex: 'title',
+            render: (title) => {
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
+                        <span>{title}</span>
+                    </div>
+                );
+            },
+            width: '10%',
+        },
+        {
+            title: 'Tên giảng viên',
+            dataIndex: 'accountName',
+            render: (accountName) => {
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
+                        <span>{accountName}</span>
+                    </div>
+                );
+            },
+            width: '10%',
+        },
+        {
+            title: 'Hình ảnh khóa học',
+            dataIndex: 'imageUrl',
+            render: (imageUrl) => (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <img src={imageUrl} alt="Khóa học" style={{ maxWidth: '100%', height: 'auto' }} />
+                </div>
+            ),
+            width: '10%',
+        },
+        {
+            title: 'Giá tiền khóa học',
+            dataIndex: 'price',
+            render: (price) => (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
+                    <span>{formatNumberWithCommas(price)} đ</span>
+                </div>
+            ),
+            width: '10%',
+        },
+        {
+            title: 'Thể loại',
+            dataIndex: 'courseCategory',
+            render: (courseCategory) => (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
+                    <span>{courseCategory}</span>
+                </div>
+            ),
+            width: '12%',
+        },
+        {
+            title: 'Thời lượng khóa học',
+            dataIndex: 'totalDuration',
+            render: (totalDuration) => {
+                const formattedTime = secondsToTimeString(totalDuration, FormatType.HH_MM, ['h', 'm']);
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span>{formattedTime}</span>
+                    </div>
+                );
+            },
+            width: '10%',
+        },
+        {
+            title: 'Ngày tạo',
+            dataIndex: 'createAt',
+            render: (createAt) => {
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span>{createAt ? createAt.split('T')[0] : ''}</span>{' '}
+                    </div>
+                );
+            },
+            width: '10%',
+        },
+        {
+            title: 'Cập nhật gần nhất',
+            dataIndex: 'updateAt',
+            render: (updateAt) => {
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span>{updateAt ? updateAt.split('T')[0] : ''}</span>{' '}
+                    </div>
+                );
+            },
+            width: '10%',
+        }, {
+            title: 'Xuất bản',
+            dataIndex: 'isPublic',
+            render: (isPublic) => {
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span>
+                            {isPublic ? (
+                                <Tag color="green">Xuất bản</Tag>
+                            ) : (
+                                <Tag color="red">Chưa xuất bản</Tag>
+                            )}
+                        </span>
+                    </div>
+                );
+            },
+            width: '10%',
+        },
+        {
+            title: 'Hành động',
+            dataIndex: 'courseId',
+            width: '5%',
+            render: (_, record) => {
+                // Log để debug - xem record có gì
+                console.log('haha:', record.courseId);
+
+                // Thử các tên field khác nhau
+                const id = record.courseId || record.courseId;
+
+                return (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <Link to={`/admin/getAllCourse/details/${id}`}>
+                            <Tooltip title="Xem chi tiết">
+                                <Button type="link">
+                                    <EyeOutlined style={{ fontSize: '20px' }} />
+                                </Button>
+                            </Tooltip>
+                        </Link>
+                        {/* <Tooltip title="Xóa khóa học" color="red">
+                            <Button danger type="link" onClick={() => handleDelete(id)}>
+                                <DeleteOutlined style={{ fontSize: '20px' }} />
+                            </Button>
+                        </Tooltip> */}
+                    </div>
+                );
+            },
+        }
+
+    ];
+
+const GetAllCourse = () => {
+    const [database, setDatabase] = useState<Course[]>([]);
+    const displayData = 10;
+    const [searchValue, setSearchValue] = useState('');
+    const [pagination, setPagination] = useState({
+        current: 1,
+        total: 0,
+    });
+    const { data: teacherList = [] } = useGetAllTeachersQuery();
+    const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
+
+    const [dateRange, setDateRange] = useState<[string, string] | null>(null);
+
+    const handleExportExcel = () => {
+        const from = dateRange?.[0] ?? "";
+        const to = dateRange?.[1] ?? "";
+
+        const url =
+            `${import.meta.env.VITE_API_URL}/Reports/ExportCourses` +
+            `?teacherId=${selectedTeacherId}` +   // ⭐ dùng state
+            `&fromDate=${from}` +
+            `&toDate=${to}`;
+
+        downloadExcel(url, "CoursesReport.xlsx");
+    };
+
+
+    const { Search } = Input;
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false); // State để điều khiển hiển thị của modal xác nhận xóa
+    const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+    const [deleteCourse] = useDeleteCourseMutation();
+
+    const input: PagingParam = {
+        pageSize: displayData,
+        pageNumber: pagination.current,
+        search: searchValue,
+        isActive: true,
+    };
+
+    const { state, response } = useCourseAll(input);
+
+    useEffect(() => {
+        if (response) {
+            setDatabase(response.courses);
+            setPagination({
+                ...pagination,
+                total: response.totalCourses,
+            });
+        }
+    }, [response, pagination, response?.totalPages]);
+
+    const handlePageChange = (page: number) => {
+        setPagination({ ...pagination, current: page });
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchValue(value);
+    };
+
+    const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            if (response) {
+                setDatabase(response.courses);
+                setPagination({
+                    ...pagination,
+                    total: response.totalCourses,
+                });
+            }
+        }
+    };
+    const handleDelete = (courseId: number) => {
+        // Xử lý xóa ở đây
+        setDeletingItemId(courseId); // Lưu id của item đang được chọn để xóa
+        setDeleteModalVisible(true); // Hiển thị modal xác nhận xóa
+    };
+
+    const confirmDelete = async () => {
+        // Xác nhận xóa ở đây
+        if (!deletingItemId) return;
+        // Sau khi xóa xong, đóng modal và cập nhật lại dữ liệu
+        setDeleteModalVisible(false);
+        // Gọi hàm xóa hoặc cập nhật dữ liệu ở đây
+        try {
+            await deleteCourse(deletingItemId);
+            const updatedCourses = database.map((course) =>
+                course.courseId === deletingItemId ? { ...course, courseIsActive: false } : course,
+            );
+            setDatabase(updatedCourses);
+            message.success('Bạn đã xóa thành công khóa học');
+            setPagination({ ...pagination });
+        } catch (error) {
+            message.error('Xóa khóa học thất bại');
+        }
+        // fetchData(); // Nếu cần refetch dữ liệu sau khi xóa
+    };
+
+    const cancelDelete = () => {
+        // Hủy xóa, đóng modal
+        setDeleteModalVisible(false);
+    };
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const allCategoryOptions = Array.from(
+        new Set(
+            database.flatMap(d =>
+                String(d.courseCategory || "")
+                    .split(",")
+                    .map(x => x.trim())
+                    .filter(Boolean)
+            )
+        )
+    ).map(c => ({ label: c, value: c }));
+
+    const filteredData = database.filter(c => {
+        if (selectedCategories.length > 0) {
+            const catList = String(c.courseCategory || "")
+                .split(",")
+                .map(x => x.trim());
+
+            const match = selectedCategories.some(cat =>
+                catList.includes(cat)
+            );
+
+            if (!match) return false;
+        }
+
+        // ⭐ Lọc theo giáo viên
+        if (selectedTeacherId && c.accountId !== selectedTeacherId)
+            return false;
+
+        return true;
+    });
+
+
+    const tableColumns: ColumnType<Course>[] = columns({ pagination, displayData, handleDelete });
+
+    return (
+        <div className="mx-auto w-[99%]  space-y-4">
+            <>
+                {' '}
+                <div>
+                    <div className="flex items-center justify-between">
+                        <h1 className="mb-5 text-2xl font-bold text-gray-800">
+                            Danh sách các khóa học:
+                        </h1>
+                    </div>
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <Search
+                                placeholder="Nhập tên khóa học hoặc giảng viên"
+                                className="w-[30%]"
+                                size="large"
+                                onChange={handleSearchChange}
+                                onKeyDown={handleSearchKeyPress}
+                                value={searchValue}
+                            />
+
+                            <div className="flex gap-3">
+                                <Select
+                                    allowClear
+                                    placeholder="Lọc theo giảng viên"
+                                    style={{ width: 220 }}
+                                    value={selectedTeacherId || undefined}
+                                    onChange={(value) => setSelectedTeacherId(value || "")}
+                                    options={teacherList.map(t => ({
+                                        label: t.fullName,
+                                        value: t.id
+                                    }))}
+                                />
+
+                                <Select
+                                    mode="multiple"
+                                    allowClear
+                                    placeholder="Lọc theo thể loại"
+                                    style={{ width: 280 }}
+                                    options={allCategoryOptions}
+                                    value={selectedCategories}
+                                    onChange={(v) => setSelectedCategories(v)}
+                                />
+                                <div className="flex gap-2">
+                                    <DatePicker
+                                        placeholder="Từ ngày"
+                                        onChange={(value) => {
+                                            setDateRange(prev => [
+                                                value ? value.format("YYYY-MM-DD") : "",
+                                                prev?.[1] ?? ""
+                                            ]);
+                                        }}
+                                    />
+
+                                    <DatePicker
+                                        placeholder="Đến ngày"
+                                        onChange={(value) => {
+                                            setDateRange(prev => [
+                                                prev?.[0] ?? "",
+                                                value ? value.format("YYYY-MM-DD") : ""
+                                            ]);
+                                        }}
+                                    />
+                                </div>
+
+
+                                <Button
+                                    className="bg-blue-600 text-white"
+                                    onClick={handleExportExcel}
+                                >
+                                    Xuất Excel
+                                </Button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <Table
+                    columns={tableColumns}
+                    rowKey={(record) => record.courseId}
+                    dataSource={filteredData}
+                    pagination={false}
+                />
+                <Pagination
+                    className="flex justify-end"
+                    disabled={state.isFetching}
+                    current={pagination.current}
+                    total={pagination.total}
+                    onChange={handlePageChange}
+                />
+                <Modal
+                    title="Xác nhận xóa"
+                    open={deleteModalVisible}
+                    onOk={confirmDelete}
+                    onCancel={cancelDelete}
+                    okButtonProps={{ className: 'bg-blue-500 text-white' }}
+                    cancelButtonProps={{ className: 'bg-red-500 text-white' }}
+                    okText="Xác nhận"
+                    cancelText="Hủy"
+                >
+                    <p>Bạn có chắc chắn muốn xóa khóa học này không?</p>
+                </Modal>
+            </>
+        </div>
+    );
+};
+
+export default GetAllCourse;
