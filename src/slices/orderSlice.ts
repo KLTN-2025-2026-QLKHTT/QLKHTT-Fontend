@@ -26,7 +26,6 @@ const initialState: OrderState = {
             totalPrice: 0,
         },
         CourseData: {
-            accountId: "",
             courseCategories: [],
             courseId: 0,
             courseIsActive: false,
