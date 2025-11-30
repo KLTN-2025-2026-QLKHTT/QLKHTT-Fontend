@@ -33,6 +33,10 @@ export default function ApproveTeacherPage() {
       render: () => <Tag color="orange">Đang chờ duyệt</Tag>,
     },
     {
+      title: "Ngày đăng ký",
+      render: (_: any, r: any) => r.createdAt,
+    },
+    {
       title: "Hành động",
       render: (_: any, r: any) => (
         <Button
