@@ -35,9 +35,17 @@ export default function ApproveTeacherPage() {
     {
       title: "Hành động",
       render: (_: any, r: any) => (
-        <Button type="primary" onClick={() => approve(r.id)}>
+        <Button
+          type="primary"
+          style={{
+            backgroundColor: "#52c41a",
+            borderColor: "#52c41a",
+          }}
+          onClick={() => approve(r.id)}
+        >
           Duyệt
         </Button>
+
       ),
     },
   ];
