@@ -33,23 +33,11 @@ export default function ApproveTeacherPage() {
       render: () => <Tag color="orange">Đang chờ duyệt</Tag>,
     },
     {
-      title: "Ngày đăng ký",
-      render: (_: any, r: any) => r.createdAt,
-    },
-    {
       title: "Hành động",
       render: (_: any, r: any) => (
-        <Button
-          type="primary"
-          style={{
-            backgroundColor: "#52c41a",
-            borderColor: "#52c41a",
-          }}
-          onClick={() => approve(r.id)}
-        >
+        <Button type="primary" onClick={() => approve(r.id)}>
           Duyệt
         </Button>
-
       ),
     },
   ];
